@@ -25,7 +25,7 @@ jobs:
 
       - name: Fetch sources and toolchain for armv7l
         run: |
-          ./spc fetch ${{ github.event.inputs.php_version || '8.0.30' }} --target=linux-arm
+          ./spc fetch ${{ github.event.inputs.php_version || '8.0.30' }} --arch=armv7l
 
       - name: Build static PHP CLI for armv7l
         run: |
