@@ -1,12 +1,12 @@
-name: Build static PHP for armv7l
+name: Build static PHP for ARMv7l
 
 on:
   workflow_dispatch:
     inputs:
       php_version:
-        description: 'PHP 版本 (如 8.0.30)'
+        description: 'PHP version (e.g., 8.3.0)'
         required: true
-        default: '8.0.30'
+        default: '8.3.0'
 
 jobs:
   build:
@@ -16,25 +16,25 @@ jobs:
       - name: Create output directory
         run: mkdir -p output
 
-      - name: Download spc (static PHP compiler)
+      - name: Download spc
         run: |
-          wget -q https://dl.static-php.dev/static-php-cli/spc-bin/nightly/spc-linux-x86_64 -O spc
+          curl -Lo spc https://dl.static-php.dev/static-php-cli/spc-bin/nightly/spc-linux-x86_64
           chmod +x spc
 
-      - name: Clean previous build artifacts (if any)
+      - name: Clean previous builds
         run: |
           rm -rf source downloads buildroot || true
 
       - name: Fetch PHP sources
         run: |
-          ./spc fetch ${{ github.event.inputs.php_version }}
+          ./spc fetch ${{ github.event.inputs.php_version }} --clean
 
       - name: Build static PHP CLI for armv7l
         run: |
           ./spc build ${{ github.event.inputs.php_version }} \
-            --target=linux-arm \
+            --arch=armv7l \
             --build-cli \
-            --disable-all-extensions
+            --with-extensions=curl,openssl,mbstring,sqlite3,zlib
 
       - name: Locate binary
         id: locate
