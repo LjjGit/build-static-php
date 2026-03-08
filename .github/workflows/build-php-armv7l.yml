@@ -1,0 +1,53 @@
+name: Build static PHP for armv7l
+
+on:
+  # 可以手动触发，也可按需自动触发（例如 push 到特定分支）
+  workflow_dispatch:
+    inputs:
+      php_version:
+        description: 'PHP 版本 (如 8.0.30)'
+        required: true
+        default: '8.0.30'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout (optional)
+        # 不需要项目源码，但为保留下载的二进制，可以创建目录
+        run: mkdir -p output
+
+      - name: Download spc (static PHP compiler)
+        run: |
+          wget -q https://dl.static-php.dev/static-php-cli/spc-bin/nightly/spc-linux-x86_64 -O spc
+          chmod +x spc
+
+      - name: Fetch sources and toolchain for armv7l
+        run: |
+          ./spc fetch ${{ github.event.inputs.php_version || '8.0.30' }} --target=linux-arm
+
+      - name: Build static PHP CLI for armv7l
+        run: |
+          # 构建最小化 CLI 版本，不包含任何额外扩展（可根据需要调整）
+          ./spc build ${{ github.event.inputs.php_version || '8.0.30' }} \
+            --target=linux-arm \
+            --build-cli \
+            --disable-all-extensions
+
+      - name: Locate binary
+        id: locate
+        run: |
+          # 查找生成的二进制文件，通常位于 builds/ 下
+          binary_path=$(find builds -name "php-*linux-arm*" -type f | head -n1)
+          if [ -z "$binary_path" ]; then
+            echo "Binary not found!"
+            exit 1
+          fi
+          echo "binary=$binary_path" >> $GITHUB_OUTPUT
+
+      - name: Upload binary as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: php-${{ github.event.inputs.php_version || '8.0.30' }}-armv7l-static
+          path: ${{ steps.locate.outputs.binary }}
