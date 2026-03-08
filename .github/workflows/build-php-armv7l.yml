@@ -21,9 +21,13 @@ jobs:
           wget -q https://dl.static-php.dev/static-php-cli/spc-bin/nightly/spc-linux-x86_64 -O spc
           chmod +x spc
 
+      - name: Clean previous build artifacts (if any)
+        run: |
+          rm -rf source downloads buildroot || true
+
       - name: Fetch PHP sources
         run: |
-          ./spc fetch ${{ github.event.inputs.php_version }} --clean
+          ./spc fetch ${{ github.event.inputs.php_version }}
 
       - name: Build static PHP CLI for armv7l
         run: |
@@ -35,7 +39,6 @@ jobs:
       - name: Locate binary
         id: locate
         run: |
-          # 查找生成的二进制文件，通常位于 builds/php-<version>-linux-arm/ 下
           binary_path=$(find builds -name "php*linux-arm*" -type f -executable | head -n1)
           if [ -z "$binary_path" ]; then
             echo "Binary not found!"
